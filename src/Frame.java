@@ -1,11 +1,15 @@
 
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
+
+
 public class Frame extends JFrame {
 
     private static final int width = 1200;
@@ -25,6 +29,9 @@ public class Frame extends JFrame {
     private JTextField step_field;
     private Box BoxResult;
 
+    private GornerTableCell cell = new GornerTableCell();
+
+    private GornerTable data;
     private JFileChooser fileChooser = null;
 
     private DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance();
@@ -96,7 +103,7 @@ public class Frame extends JFrame {
                 String value = JOptionPane.showInputDialog(Frame.this,
                         "Введите значение для поиска", "Поиск значения",
                         JOptionPane.QUESTION_MESSAGE);
-
+                cell.setSearch(value);
                 getContentPane().repaint();
             }
         };
@@ -130,6 +137,7 @@ public class Frame extends JFrame {
                 JOptionPane.showMessageDialog(Frame.this,
                         diapazonBox, "" +
                                 "Найти из диапазона", JOptionPane.QUESTION_MESSAGE);
+                cell.setdiap(searchFrom.getText(), searchTo.getText());
                 getContentPane().repaint();
             }
         };
@@ -171,7 +179,40 @@ public class Frame extends JFrame {
         calculateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                try {
+                    // Считать значения границ отрезка, шага из полей ввода
+                    Double from = Double.parseDouble(from_field.getText());
+                    Double to = Double.parseDouble(to_field.getText());
+                    Double step = Double.parseDouble(step_field.getText());
+                    if ((from < to && step > 0.0) || (from > to && step < 0.0)) {
 
+                        // На основе считанных данных создать модель таблицы
+                        data = new GornerTable(from, to, step, Frame.this.coefficients);
+                        // Создать новый экземпляр таблицы
+                        JTable table = new JTable(data);
+                        // Установить в качестве визуализатора ячеек для класса Double разработанный визуализатор
+                        table.setDefaultRenderer(Double.class, cell);
+                        // Установить размер строки таблицы в 30 пикселов
+                        table.setRowHeight(30);
+                        // Удалить все вложенные элементы из контейнера hBoxResult
+                        BoxResult.removeAll();
+                        // Добавить в hBoxResult таблицу, "обѐрнутую" в панель с полосами прокрутки
+                        BoxResult.add(new JScrollPane(table));
+                        // Обновить область содержания главного окна
+                        getContentPane().validate();
+                        //  Пометить ряд элементов меню как доступных saveToTextMenuItem.setEnabled(true);
+                        saveToGraphicsMenuItem.setEnabled(true);
+                        searchValueMenuItem.setEnabled(true);
+                    } else {
+                        JOptionPane.showMessageDialog(Frame.this,
+                                "Проверьте введенные данные\nНевозможно произвести вычисления", "" +
+                                        "Ошибка ввода", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (NumberFormatException ex) {
+                    // В случае ошибки преобразования показать сообщение об ошибке
+                    JOptionPane.showMessageDialog(Frame.this, "Ошибка в формате записи числа с плавающей точкой",
+                            "Ошибочный формат числа", JOptionPane.WARNING_MESSAGE);
+                }
             }
         });
 
@@ -242,14 +283,65 @@ public class Frame extends JFrame {
     }
 
     protected void saveToGraphicsFile(File selectedFile) {
-
+        try {
+            // Создать новый байтовый поток вывода, направленный в указанный файл
+            DataOutputStream out = new DataOutputStream(new FileOutputStream(selectedFile));
+            // Записать в поток вывода попарно значение X в точке, значение многочлена в точке
+            for (int i = 0; i < data.getRowCount(); i++) {
+                out.writeDouble((Double) data.getValueAt(i, 0));
+                out.writeDouble((Double) data.getValueAt(i, 1));
+            } // Закрыть поток вывода
+            out.close();
+        } catch (Exception e) {
+            // Исключительную ситуацию "ФайлНеНайден" в данном случае можно не обрабатывать, так как мы файл создаѐм, а не открываем для чтения
+        }
     }
 
     protected void saveToTextFile(File selectedFile) {
-
+        try {
+            // Создать новый символьный поток вывода, направленный в указанный файл
+            PrintStream out = new PrintStream(selectedFile);
+            // Записать в поток вывода заголовочные сведения
+            out.println("Результаты табулирования многочлена по схеме Горнера");
+            out.print("Многочлен: ");
+            for (int i = 0; i < coefficients.length; i++) {
+                out.print(coefficients[i] + "*X^" + (coefficients.length - i - 1));
+                if (i != coefficients.length - 1)
+                    out.print(" + ");
+            }
+            out.println("");
+            out.println("Интервал от " + data.getFrom() + " до " + data.getTo() + " с шагом " + data.getStep());
+            out.println("====================================================");
+            // Записать в поток вывода значения в точках
+            for (int i = 0; i < data.getRowCount(); i++) {
+                out.println("Значение в точке " + data.getValueAt(i, 0) + " равно " + data.getValueAt(i, 1));
+            }
+            // Закрыть поток
+            out.close();
+        } catch (FileNotFoundException e) {
+            // Исключительную ситуацию "ФайлНеНайден" можно не // обрабатывать, так как мы файл создаѐм, а не открываем
+        }
     }
 
     protected void saveToCSVFile(File selectedFile) {
+        try{
+            PrintWriter writer = new PrintWriter(selectedFile);
+            writer.println("Вычисление значения многочлена по схеме Горнера");
+            writer.println("Значение X изменяется от " + data.getFrom() + " до " + data.getTo() + " с шагом " +  data.getStep());
+            writer.print("Значение X");
+            writer.print("Значение многочлена ");
+            writer.print("Обратный порядок");
+            writer.println("Разность");
+            for (int i = 0; i < data.getRowCount(); i++){
+                for(int k = 0; k < data. getColumnCount(); k++)
+                {
+                    writer.print(formatter.format(data.getValueAt(i, k)));
+                }
+                writer.println("");
+            }
+            writer.close();
+        }catch(Exception e){
 
-}
+        }
+    }
 }
