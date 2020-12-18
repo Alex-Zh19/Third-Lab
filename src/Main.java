@@ -9,13 +9,13 @@ public class Main {
         if(getCoefficients()==null)
             return;
         Frame frame = new Frame(getCoefficients());
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
 
     public static Double[] getCoefficients() throws IOException {
         try {
-            BufferedReader bf = new BufferedReader(new FileReader("Initial_Data.txt"));
+            BufferedReader bf = new BufferedReader(new FileReader("in Data.txt"));
             int amount = Integer.parseInt(bf.readLine());
             Double[] coefficients = new Double[amount];
             for (int i = 0; i < amount; i++) {

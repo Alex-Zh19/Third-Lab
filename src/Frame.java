@@ -1,12 +1,9 @@
-
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 
 
@@ -150,23 +147,13 @@ public class Frame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 Box information = Box.createVerticalBox();
-                JLabel author = new JLabel("Автор: Дувалов Егор");
+                JLabel author = new JLabel("Автор: Жалнерчик А.");
                 JLabel group = new JLabel("Группа 8, Курс 2");
                 information.add(Box.createVerticalGlue());
                 information.add(author);
                 information.add(Box.createVerticalStrut(10));
                 information.add(group);
                 information.add(Box.createVerticalStrut(10));
-                try {
-                    JLabel image = new JLabel(new ImageIcon(Frame.class.getResource("Stitch.gif")));
-                    image.setSize(100,150);
-                    information.add(image);
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(Frame.this, e);
-                }
-                information.add(Box.createVerticalStrut(10));
-                information.add(Box.createVerticalGlue());
-
                 JOptionPane.showMessageDialog(Frame.this,
                         information, "" +
                                 "О программе", JOptionPane.INFORMATION_MESSAGE);
@@ -186,21 +173,13 @@ public class Frame extends JFrame {
                     Double step = Double.parseDouble(step_field.getText());
                     if ((from < to && step > 0.0) || (from > to && step < 0.0)) {
 
-                        // На основе считанных данных создать модель таблицы
                         data = new GornerTable(from, to, step, Frame.this.coefficients);
-                        // Создать новый экземпляр таблицы
                         JTable table = new JTable(data);
-                        // Установить в качестве визуализатора ячеек для класса Double разработанный визуализатор
                         table.setDefaultRenderer(Double.class, cell);
-                        // Установить размер строки таблицы в 30 пикселов
                         table.setRowHeight(30);
-                        // Удалить все вложенные элементы из контейнера hBoxResult
                         BoxResult.removeAll();
-                        // Добавить в hBoxResult таблицу, "обѐрнутую" в панель с полосами прокрутки
                         BoxResult.add(new JScrollPane(table));
-                        // Обновить область содержания главного окна
                         getContentPane().validate();
-                        //  Пометить ряд элементов меню как доступных saveToTextMenuItem.setEnabled(true);
                         saveToGraphicsMenuItem.setEnabled(true);
                         searchValueMenuItem.setEnabled(true);
                     } else {
@@ -209,7 +188,6 @@ public class Frame extends JFrame {
                                         "Ошибка ввода", JOptionPane.ERROR_MESSAGE);
                     }
                 } catch (NumberFormatException ex) {
-                    // В случае ошибки преобразования показать сообщение об ошибке
                     JOptionPane.showMessageDialog(Frame.this, "Ошибка в формате записи числа с плавающей точкой",
                             "Ошибочный формат числа", JOptionPane.WARNING_MESSAGE);
                 }
@@ -217,22 +195,16 @@ public class Frame extends JFrame {
         });
 
         JButton resetButton = new JButton("Очистить поля");
-        // Задать действие на нажатие "Очистить поля" и привязать к кнопке
         resetButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ev) {
-                // Установить в полях ввода значения по умолчанию
                 from_field.setText("0.0");
                 to_field.setText("1.0");
                 step_field.setText("0.1");
-                // Удалить все вложенные элементы контейнера BoxResult
                 BoxResult.removeAll();
-                // Добавить в контейнер пустую панель
                 BoxResult.add(new JPanel());
-                // Пометить элементы меню как недоступные
                 saveToTextMenuItem.setEnabled(false);
                 saveToGraphicsMenuItem.setEnabled(false);
                 searchValueMenuItem.setEnabled(false);
-                // Обновить область содержания главного окна
                 getContentPane().validate();
             }
         });
@@ -284,24 +256,20 @@ public class Frame extends JFrame {
 
     protected void saveToGraphicsFile(File selectedFile) {
         try {
-            // Создать новый байтовый поток вывода, направленный в указанный файл
             DataOutputStream out = new DataOutputStream(new FileOutputStream(selectedFile));
-            // Записать в поток вывода попарно значение X в точке, значение многочлена в точке
             for (int i = 0; i < data.getRowCount(); i++) {
                 out.writeDouble((Double) data.getValueAt(i, 0));
                 out.writeDouble((Double) data.getValueAt(i, 1));
-            } // Закрыть поток вывода
+            }
             out.close();
         } catch (Exception e) {
-            // Исключительную ситуацию "ФайлНеНайден" в данном случае можно не обрабатывать, так как мы файл создаѐм, а не открываем для чтения
+
         }
     }
 
     protected void saveToTextFile(File selectedFile) {
         try {
-            // Создать новый символьный поток вывода, направленный в указанный файл
             PrintStream out = new PrintStream(selectedFile);
-            // Записать в поток вывода заголовочные сведения
             out.println("Результаты табулирования многочлена по схеме Горнера");
             out.print("Многочлен: ");
             for (int i = 0; i < coefficients.length; i++) {
@@ -312,14 +280,12 @@ public class Frame extends JFrame {
             out.println("");
             out.println("Интервал от " + data.getFrom() + " до " + data.getTo() + " с шагом " + data.getStep());
             out.println("====================================================");
-            // Записать в поток вывода значения в точках
             for (int i = 0; i < data.getRowCount(); i++) {
                 out.println("Значение в точке " + data.getValueAt(i, 0) + " равно " + data.getValueAt(i, 1));
             }
-            // Закрыть поток
             out.close();
         } catch (FileNotFoundException e) {
-            // Исключительную ситуацию "ФайлНеНайден" можно не // обрабатывать, так как мы файл создаѐм, а не открываем
+
         }
     }
 
